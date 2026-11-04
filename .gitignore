@@ -1,0 +1,30 @@
+# XNLI datasets (download separately, see project PDF)
+XNLI-1.0/
+XNLI-MT-1.0/
+*.zip
+
+# Model checkpoints
+best_model/
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
