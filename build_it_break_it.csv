@@ -1,0 +1,6 @@
+Premise,Hypothesis,Label
+The chef did not burn the soup.,The soup was burned by the chef.,contradiction
+Every student in the lab submitted a paper to ACL.,Some students in the lab submitted a paper to ACL.,entailment
+Maria bought three apples and two pears.,Maria bought five pieces of fruit.,entailment
+The lawyer questioned the doctor.,The doctor questioned the lawyer.,neutral
+The museum is closed on Mondays.,The museum is popular with tourists.,neutral
