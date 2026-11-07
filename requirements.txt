@@ -1,0 +1,21 @@
+# Versions match the critnet_hai conda env (Python 3.12.9), where the notebook has been run.
+# On Linux, torch==2.9.1 installs the CUDA 12.8 build.
+
+# Model and training
+torch==2.9.1
+transformers==4.57.1
+einops==0.8.1
+
+# Data and plotting
+numpy==2.4.1
+pandas==2.3.3
+matplotlib==3.11.1
+tqdm==4.67.1
+
+# Imported by utils.py
+requests==2.32.5
+filelock==3.20.3
+huggingface-hub==0.36.0
+
+# Notebook kernel
+ipykernel==7.3.0

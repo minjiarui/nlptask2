@@ -1,0 +1,5 @@
+XNLI-1.0/
+XNLI-MT-1.0/
+*.pt
+*.ipynb_checkpoints
+__pycache__/
