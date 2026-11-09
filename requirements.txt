@@ -1,21 +1,29 @@
-# Versions match the critnet_hai conda env (Python 3.12.9), where the notebook has been run.
-# On Linux, torch==2.9.1 installs the CUDA 12.8 build.
+# One environment for everything: the GPT-2 notebooks, Task3/task3.ipynb and the twin generation
+# (Task3/data/make_benign_twins.ipynb). Python 3.12; checked with `uv pip compile` for a consistent set.
+# vLLM needs transformers 5.x and torch 2.13, so these are the newer versions of each package.
+# On Linux, torch==2.13.0 installs the CUDA 13.0 build.
+# Twin generation: Qwen/Qwen3.8-27B in bf16 is about 55 GB and needs a GPU with 80 GB or more.
+# vLLM needs numpy < 2.4, so numpy is pinned to 2.3.5.
 
 # Model and training
-torch==2.9.1
-transformers==4.57.1
+torch==2.13.0
+transformers==5.15.0
 einops==0.8.1
 
+# Serving Qwen3.8 for twin generation
+vllm==0.27.1
+
 # Data and plotting
-numpy==2.4.1
+numpy==2.3.5
 pandas==2.3.3
 matplotlib==3.11.1
 tqdm==4.67.1
+datasets==5.0.1
 
 # Imported by utils.py
 requests==2.32.5
 filelock==3.20.3
-huggingface-hub==0.36.0
+huggingface-hub==1.27.0
 
 # Notebook kernel
 ipykernel==7.3.0

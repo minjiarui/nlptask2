@@ -1,113 +1,71 @@
-# nlptask2
-NLP Project Collab with Jonny
+# GPT-2 from scratch for NLI
 
-Default final project for 50.040 Natural Language Processing, Fall 2026: GPT-2 built from scratch in PyTorch, then fine-tuned for natural language inference (NLI) on XNLI in English and other languages. All the work is in `default_final_project.ipynb`.
+Final project for 50.040 Natural Language Processing (Fall 2026). We build GPT-2 in PyTorch, fine-tune it for natural language inference (NLI) on XNLI, and then use the fine-tuned model to check whether a rewritten request still says the same thing as the original, using SORRY-Bench prompts (Task 3).
 
-| Deadline | What's due |
-|---|---|
-| **16 Nov 2026, 23:59** | Build-it-break-it test cases (optional bonus, up to 20) |
-| 19 Nov 2026 | Kaggle sign-up link released; one submission a day until the project deadline |
-| **6 Dec 2026, 23:59** | Final project |
+NLI is framed as next-token prediction. The prompt is `Premise: ...\nHypothesis: ...\nLabel:` and the model generates one token: `0` entailment, `1` contradictory, `2` neutral.
 
-## Current status
+## Results
 
-**Task 1 is finished. Task 2 is written but has no results, because the baseline fine-tune was stopped at 1% on a CPU. Task 3 is partly scaffolded and has not been run.** Everything after the fine-tuning step depends on a `best_model/model.pt` checkpoint, which doesn't exist yet.
+### Task 1: GPT-2 implementation
+- Tokenizer, GPT-2 model and AdamW are done. `test_gpt2` matches the Hugging Face GPT-2, and the AdamW test passes against `optimizer_test.npy`.
+- Toy pretraining (2 layers, hidden size 128, 3 epochs on `pretrain.txt`): average train loss 7.26, 6.86 and 6.61 after epochs 1, 2 and 3 (cumulative averages).
 
-| Part | Marks | Code | Run | Result |
+### Task 2: English NLI
+Greedy generation works on both the pretrained and the toy model. Fine-tuned on 392,702 MultiNLI pairs, one epoch each, and evaluated on XNLI English (2,490 dev, 5,010 test):
+
+| Run | LR | Batch size | Dev acc | Test acc |
 |---|---|---|---|---|
-| **Task 1: GPT-2** | **10** | | | |
-| Tokenizer | 2 | Done | Yes | Encodes and decodes correctly |
-| GPT-2 model (TODO 1-5) | 2 | Done | Yes | Matches the Hugging Face GPT-2 (`test_gpt2` passes) |
-| AdamW (TODO 6) | 2 | Done | Yes | Matches `optimizer_test.npy` (test passes) |
-| Toy pretraining (TODO 7) | 4 | Done | Yes | Average loss falls from 10.86 to 6.61 |
-| **Task 2: English NLI** | **10** | | | |
-| Greedy generation (TODO 8) | 3 | Done | Yes | Works on both the pretrained and toy models |
-| XNLI data loading | 2 | Done | Yes | 392,702 train / 2,490 dev / 5,010 test |
-| Baseline fine-tune (TODO 9) | 5 (shared) | Done | **Stopped at 654 of 98,176 steps** | No accuracy yet |
-| Test evaluation | shared | Done | No | None |
-| Hyperparameter experiments (required) | shared | Done | No | None; observations still blank |
-| **Task 3: Multilingual NLI** | **10** | | | |
-| Zero-shot transfer, 15 languages | 2 | Provided | No | Needs `best_model/model.pt` |
-| Fertility analysis | 2 | Provided | No | None |
-| Per-language fine-tuning | 3 | **Not started** | No | Instructions only, no code |
-| Unified multilingual fine-tuning | 3 | **Not started** | No | Instructions only, no code |
-| **Build-it-break-it** | **3 bonus** | **Not started** | No | No team test cases in the repo yet |
+| Baseline | 5e-5 | 4 | 78.15% | 76.63% |
+| `lr2e-5` | 2e-5 | 4 | **80.12%** | **80.24%** |
+| `bs16_lr1e-4` | 1e-4 | 16 | 78.47% | 78.64% |
 
-The total is capped at 30 marks. Task 3 can be replaced by a custom extension, but that needs its own 10-mark rubric in the report. The notebook currently follows the default multilingual task.
+- A lower learning rate gave the best accuracy and the lowest training loss.
+- Batch size 16 gave a small gain and used 4x fewer steps (about 21 minutes against 79 minutes for `lr2e-5`).
+- Dev and test accuracy move together, so the two sets look like the same distribution.
+- Checkpoints are in `best_model/`, `best_model_lr2e-5/` and `best_model_bs16_lr1e-4/`.
 
-## Results so far
+### Task 3 (custom)
+Uses SORRY-Bench: 450 unsafe base requests, each rewritten in 20 styles (question, role play, slang, translations, ciphers, persuasion styles, ...). We test the baseline model as is.
 
-**Toy pretraining** (2 layers, hidden size 128, 4 heads, 3 epochs on `pretrain.txt`). These are cumulative averages over the whole run, not per-epoch losses.
+1. **Rewrite vs. base prompt.** Premise is the rewritten prompt, hypothesis is the base prompt. Expected label: entailment.
+2. **Rewrite vs. benign twin.** For each base prompt, Qwen3.8-27B wrote a harmless twin with almost the same wording. Premise is the prompt in each style, hypothesis is the twin. Expected label: contradictory or neutral.
 
-| After epoch | 1 | 2 | 3 |
-|---|---|---|---|
-| Average train loss | 7.26 | 6.86 | 6.61 |
+| Style | Entailment on rewrite vs. base | Non-entailment on rewrite vs. twin |
+|---|---|---|
+| `base` | n/a | 92.9% |
+| `question` | 87.7% | 91.3% |
+| `role_play` | 58.7% | 92.4% |
+| `uncommon_dialects` | 54.2% | 87.1% |
+| `slang` | 33.8% | 91.6% |
+| persuasion styles (authority, expert, logic, evidence, misrepresentation) | 18-32% | 96-98% |
+| ciphers and translations | 0-7% | 99-100% |
 
-**Text generation**, prompted with "Singapore University of Technology and Design (SUTD) is". Both models fall into repetition, which is common with greedy decoding.
-- Pretrained GPT-2 is fluent at first, then loops on "full-time, full-time, ...".
-- The toy model produces mostly noise, such as `"The "The "The`.
+- The model recognises a rewrite as the same request mainly when the rewrite stays close to the original wording (`question`, `role_play`, `uncommon_dialects`). It is weak on heavier rewrites.
+- For ciphers and translations the model cannot read the text and answers neutral or contradictory. These get 0-7% on the first test and 99-100% on the second, so only the readable styles tell us anything. `morse` prompts are all too long for the 1,023-token limit.
+- Full per-style tables, with the split of predicted labels, are in `Task3/results/`.
 
-**Baseline fine-tune:** the only figure is an average loss of 1.11 at step 654. That is about the 1.10 expected from guessing among three labels, so it says nothing yet about final accuracy.
+## Repository
 
-> The comment in the test evaluation cell mentions about 77.96% accuracy, but no saved output backs that up. It was already there in the first upload, so don't report it as our result.
-
-## Next steps
-
-1. **Write up to 20 build-it-break-it test cases by 16 Nov.** They must be English and use the same `Premise,Hypothesis,Label` columns as the example CSV. This doesn't depend on any training.
-2. **Finish the baseline fine-tune on a GPU.** The saved run was on a CPU at 1.71 it/s, with about 16 hours left at the point it was stopped.
-3. Run test evaluation, then the hyperparameter experiments, and fill in the observations.
-4. Run zero-shot transfer and fertility analysis, then use them to choose languages.
-5. Write the per-language and unified fine-tuning code.
-6. Add a step that runs the chosen model on the build-it-break-it test set and writes a results CSV for Kaggle.
+| Path | Contents |
+|---|---|
+| `default_final_project.ipynb` | Tasks 1 and 2: tokenizer, model, AdamW, pretraining, fine-tuning, hyperparameter runs |
+| `model.py`, `config.py`, `utils.py` | GPT-2 model code, config and helpers (used by the Task 3 notebook) |
+| `Task3/task3.ipynb` | Task 3 experiments |
+| `Task3/data/` | `make_benign_twins.ipynb` (twin generation) and `sorry_bench_twins.jsonl` (the twins) |
+| `Task3/results/` | `rewritten_vs_base.csv` and `rewritten_vs_twin.csv` |
+| `best_model*/` | Checkpoints and training-progress files |
+| `pretrain.txt`, `optimizer_test.npy` | Toy corpus and AdamW reference |
 
 ## Setup
 
-Use Python 3.11 or newer (the notebook has been run on 3.12.9), then install the pinned packages:
+Python 3.12, then:
 
 ```
 pip install -r requirements.txt
 ```
 
-XNLI isn't in the repo. Download `XNLI-1.0.zip` and `XNLI-MT-1.0.zip` and extract them into this folder, then run the notebook from top to bottom:
+XNLI is not in the repo. Download `XNLI-1.0.zip` and `XNLI-MT-1.0.zip` and extract them into the repo root, then run `default_final_project.ipynb` from top to bottom. Run the hyperparameter experiments before any other cell that replaces `train_dataset` or `test_dataset`.
 
-```
-XNLI-1.0/xnli.dev.tsv
-XNLI-1.0/xnli.test.tsv
-XNLI-MT-1.0/multinli/multinli.train.{lang}.tsv
-```
+**Task 3 notebook:** run it from inside `Task3/`. It finds `model.py` and `best_model/` in the repo root by itself. SORRY-Bench is a gated dataset: accept its terms on Hugging Face and set `HF_TOKEN` in the environment.
 
-## Files
-
-| File | Purpose |
-|---|---|
-| `default_final_project.ipynb` | All model, training and evaluation code |
-| `xnli_eda.ipynb` | Short exploration of the XNLI splits, labels, text style and token lengths |
-| `config.py` | `GPT2Config`, the model hyperparameters (the brief says no changes are needed) |
-| `utils.py` | Attention mask and dtype helpers, GPT-2 size presets, and unused download code (the brief says no changes are needed) |
-| `pretrain.txt` | Toy pretraining corpus, 5,778 lines |
-| `optimizer_test.npy` | Reference weights for the AdamW test |
-| `build_it_break_it - build_it_break_it.csv.csv` | 5 sample rows, which appear to be the course's format example for test cases; the notebook doesn't load it |
-| `50040_nlp_default_project_2026Fall(1).pdf` | Project brief (not committed) |
-
-## Things to watch out for
-
-**Before re-running**
-- **Reload the model before restarting the fine-tune.** The fine-tuning cell continues from whatever is in `model`. In a live kernel that includes the stopped run, so re-run the "Load a pretrained GPT-2" cell first.
-- **Add mid-epoch checkpoints.** The model only saves at the end of an epoch, and the baseline has one epoch, so stopping early loses everything.
-- **Run the hyperparameter experiments before Task 3.** Task 3 overwrites `test_dataset` and `test_loader` (ending on Chinese) and `train_dataset` (1% of Chinese). The experiments read those same globals, so running them afterwards would silently use the wrong data.
-- **Run the experiment cells in order.** `baseline_results` and `finetune_and_evaluate` rely on variables set by earlier cells, such as `acc`, `best_dev_acc`, `dev_loader` and `test_loader`.
-
-**Code issues**
-- **`GPT2Model.from_pretrained` sets the wrong MLP size.** It uses `intermediate_size=d*3`, but GPT-2 uses `d*4`. Results aren't affected for now, because loading the real weights replaces the layer's tensors with the 3072-wide ones. However, `model.config` still reports 2304, and a checkpoint can't load into a model built with `d*3`.
-- **`os` is only imported through `from utils import *`.** Add `import os` to the first cell, since the fine-tuning code needs it.
-- **Activation differs slightly from GPT-2.** The notebook uses exact `F.gelu`, while GPT-2 uses the tanh approximation. The largest difference is about 0.0005 per activation, and `test_gpt2` is loose enough (`atol=0.1`) to pass anyway.
-- **Checkpoint loads in Task 2 and Task 3 have no `map_location`.** A checkpoint saved on a GPU won't load on a CPU-only machine.
-- **The Arabic train file has 2,000 empty hypotheses.** They are the last 2,000 rows, and `dropna` misses them because they are empty strings. Remove them before training on Arabic.
-- **`XNLIDataset` can't read the build-it-break-it format.** That CSV uses capitalised columns and the label `contradiction`, while the class expects `premise`, `hypo` and `contradictory`. It will need a small loader of its own.
-
-## Branches
-
-Status as of the last fetch:
-- `hai-branch` is the only branch with both the notebook and the `.py` and data files.
-- `origin/main`, `Task-1`, `Task-3` and `Build-it-and-break-it` have had the notebook and README deleted, so merging needs care.
-- `origin/amith/tokenizer-setup` has a tokenizer exploration section, setup files and a Windows UTF-8 fix that aren't on this branch yet.
+**Twin generation** (`Task3/data/make_benign_twins.ipynb`) runs Qwen3.8-27B with vLLM from the same `requirements.txt`; Qwen3.8 needs the newer `transformers` 5.x and `torch` 2.13. It needs a lot of memory: a GPU with at least 80 GB, and about 55 GB of disk for the model download.
