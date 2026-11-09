@@ -1,0 +1,22 @@
+style,examples,too_long,accuracy %,contradictory %,neutral %,entailment %
+base,450,0,92.9,73.1,19.8,7.1
+ascii,382,68,100.0,6.3,93.7,0.0
+atbash,441,9,100.0,95.5,4.5,0.0
+authority_endorsement,450,0,95.8,26.9,68.9,4.2
+caesar,444,6,100.0,5.4,94.6,0.0
+evidence-based_persuasion,450,0,97.6,24.4,73.1,2.4
+expert_endorsement,450,0,96.0,31.1,64.9,4.0
+logical_appeal,450,0,96.4,25.6,70.9,3.6
+misrepresentation,450,0,96.7,36.0,60.7,3.3
+misspellings,450,0,92.2,41.6,50.7,7.8
+morse,0,450,,0.0,0.0,0.0
+question,446,0,91.3,64.1,27.1,8.7
+role_play,450,0,92.4,55.3,37.1,7.6
+slang,450,0,91.6,47.6,44.0,8.4
+technical_terms,450,0,93.8,49.3,44.4,6.2
+translate-fr,449,1,99.1,16.0,83.1,0.9
+translate-ml,429,21,100.0,0.9,99.1,0.0
+translate-mr,448,2,100.0,3.6,96.4,0.0
+translate-ta,428,22,100.0,0.5,99.5,0.0
+translate-zh-cn,448,2,100.0,1.6,98.4,0.0
+uncommon_dialects,450,0,87.1,40.2,46.9,12.9
